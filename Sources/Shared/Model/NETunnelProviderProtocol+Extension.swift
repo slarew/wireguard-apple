@@ -26,6 +26,10 @@ extension NETunnelProviderProtocol {
         providerConfiguration = ["UID": getuid()]
         #endif
 
+        if #available(iOS 14.0, macOS 10.15, *) {
+            includeAllNetworks = true
+        }
+
         let endpoints = tunnelConfiguration.peers.compactMap { $0.endpoint }
         if endpoints.count == 1 {
             serverAddress = endpoints[0].stringRepresentation
@@ -59,6 +63,15 @@ extension NETunnelProviderProtocol {
 
     @discardableResult
     func migrateConfigurationIfNeeded(called name: String) -> Bool {
+        var needsMigration = false
+
+        if #available(iOS 14.0, macOS 10.15, *) {
+            if !includeAllNetworks {
+                includeAllNetworks = true
+                needsMigration = true
+            }
+        }
+
         /* This is how we did things before we switched to putting items
          * in the keychain. But it's still useful to keep the migration
          * around so that .mobileconfig files are easier.
@@ -82,6 +95,7 @@ extension NETunnelProviderProtocol {
             return true
         }
         #endif
-        return false
+
+        return needsMigration
     }
 }

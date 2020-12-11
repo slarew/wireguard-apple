@@ -769,6 +769,7 @@ extension TunnelsManager {
         tunnelProviderProtocol.providerBundleIdentifier = "\(appId).network-extension"
         tunnelProviderProtocol.passwordReference = reinstationData.keychainPasswordRef
         tunnelProviderProtocol.providerConfiguration = ["UID": getuid()]
+        tunnelProviderProtocol.includeAllNetworks = true
         tunnelProviderProtocol.serverAddress = {
             let endpoints = reinstationData.tunnelConfiguration.peers.compactMap { $0.endpoint }
             if endpoints.count == 1 {
