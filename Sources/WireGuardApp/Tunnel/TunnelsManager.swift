@@ -117,7 +117,7 @@ class TunnelsManager {
         }
     }
 
-    func add(tunnelConfiguration: TunnelConfiguration, onDemandOption: ActivateOnDemandOption = .off, completionHandler: @escaping (Result<TunnelContainer, TunnelsManagerError>) -> Void) {
+    func add(tunnelConfiguration: TunnelConfiguration, isEnabled: Bool? = nil, onDemandOption: ActivateOnDemandOption = .off, completionHandler: @escaping (Result<TunnelContainer, TunnelsManagerError>) -> Void) {
         let tunnelName = tunnelConfiguration.name ?? ""
         if tunnelName.isEmpty {
             completionHandler(.failure(TunnelsManagerError.tunnelNameEmpty))
@@ -132,11 +132,15 @@ class TunnelsManager {
         let tunnelProviderManager = NETunnelProviderManager()
         tunnelProviderManager.setTunnelConfiguration(tunnelConfiguration)
 
-        #if os(iOS)
-        tunnelProviderManager.isEnabled = false
-        #else
-        tunnelProviderManager.isEnabled = true
-        #endif
+        if let isEnabled = isEnabled {
+            tunnelProviderManager.isEnabled = isEnabled
+        } else {
+            #if os(iOS)
+            tunnelProviderManager.isEnabled = false
+            #else
+            tunnelProviderManager.isEnabled = true
+            #endif
+        }
 
         onDemandOption.apply(on: tunnelProviderManager)
 
@@ -196,7 +200,7 @@ class TunnelsManager {
         }
     }
 
-    func modify(tunnel: TunnelContainer, tunnelConfiguration: TunnelConfiguration, onDemandOption: ActivateOnDemandOption, completionHandler: @escaping (TunnelsManagerError?) -> Void) {
+    func modify(tunnel: TunnelContainer, isEnabled: Bool?, tunnelConfiguration: TunnelConfiguration, onDemandOption: ActivateOnDemandOption, completionHandler: @escaping (TunnelsManagerError?) -> Void) {
         let tunnelName = tunnelConfiguration.name ?? ""
         if tunnelName.isEmpty {
             completionHandler(TunnelsManagerError.tunnelNameEmpty)
@@ -222,6 +226,10 @@ class TunnelsManager {
 
         let isActivatingOnDemand = !tunnelProviderManager.isOnDemandEnabled && onDemandOption != .off
         onDemandOption.apply(on: tunnelProviderManager)
+
+        if let isEnabled = isEnabled {
+            tunnelProviderManager.isEnabled = isEnabled
+        }
 
         tunnelProviderManager.saveToPreferences { [weak self] error in
             if let error = error {
@@ -487,6 +495,10 @@ class TunnelContainer: NSObject {
     @objc dynamic var status: TunnelStatus
 
     @objc dynamic var isActivateOnDemandEnabled: Bool
+
+    var isEnabled: Bool {
+        return tunnelProvider.isEnabled
+    }
 
     var isAttemptingActivation = false {
         didSet {

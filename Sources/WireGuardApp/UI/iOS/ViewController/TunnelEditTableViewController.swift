@@ -103,8 +103,26 @@ class TunnelEditTableViewController: UITableViewController {
         sections.append(.onDemand)
     }
 
-    @objc func saveTapped() {
-        tableView.endEditing(false)
+    private func showConfirmationToEnableTunnel(completionHandler: @escaping (Bool?) -> Void) {
+        let alertController = UIAlertController(
+            title: "You have on-demand rules configured for this VPN configuration, however they will not be used by the system, unless you change the primary VPN configuration.\n\nWould you like to make this VPN configuration primary?\n\nNote that this will cause the system to turn off the currently active tunnel.",
+            message: "",
+            preferredStyle: .actionSheet
+        )
+        alertController.addAction(UIAlertAction(title: "Save & make primary", style: .default) { _ in
+            completionHandler(true)
+        })
+        alertController.addAction(UIAlertAction(title: "Save only", style: .default) { _ in
+            completionHandler(false)
+        })
+        alertController.addAction(UIAlertAction(title: "Continue editing", style: .cancel) { _ in
+            completionHandler(nil)
+        })
+
+        present(alertController, animated: true)
+    }
+
+    private func saveTunnel(isEnabled: Bool? = nil) {
         let tunnelSaveResult = tunnelViewModel.save()
         switch tunnelSaveResult {
         case .error(let errorMessage):
@@ -116,7 +134,7 @@ class TunnelEditTableViewController: UITableViewController {
             let onDemandOption = onDemandViewModel.toOnDemandOption()
             if let tunnel = tunnel {
                 // We're modifying an existing tunnel
-                tunnelsManager.modify(tunnel: tunnel, tunnelConfiguration: tunnelConfiguration, onDemandOption: onDemandOption) { [weak self] error in
+                tunnelsManager.modify(tunnel: tunnel, isEnabled: isEnabled, tunnelConfiguration: tunnelConfiguration, onDemandOption: onDemandOption) { [weak self] error in
                     if let error = error {
                         ErrorPresenter.showErrorAlert(error: error, from: self)
                     } else {
@@ -126,7 +144,7 @@ class TunnelEditTableViewController: UITableViewController {
                 }
             } else {
                 // We're adding a new tunnel
-                tunnelsManager.add(tunnelConfiguration: tunnelConfiguration, onDemandOption: onDemandOption) { [weak self] result in
+                tunnelsManager.add(tunnelConfiguration: tunnelConfiguration, isEnabled: isEnabled, onDemandOption: onDemandOption) { [weak self] result in
                     switch result {
                     case .failure(let error):
                         ErrorPresenter.showErrorAlert(error: error, from: self)
@@ -137,6 +155,30 @@ class TunnelEditTableViewController: UITableViewController {
                 }
             }
         }
+    }
+
+    @objc func saveTapped() {
+        tableView.endEditing(false)
+
+        #if os(iOS)
+        if onDemandViewModel.toOnDemandOption() == .off {
+            saveTunnel()
+        } else {
+            let isTunnelEnabled = tunnel?.isEnabled ?? false
+
+            if isTunnelEnabled {
+                saveTunnel()
+            } else {
+                showConfirmationToEnableTunnel { isEnabled in
+                    if let isEnabled = isEnabled {
+                        self.saveTunnel(isEnabled: isEnabled)
+                    }
+                }
+            }
+        }
+        #else
+        saveTunnel()
+        #endif
     }
 
     @objc func cancelTapped() {
