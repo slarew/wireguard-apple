@@ -42,6 +42,7 @@ class ActivateOnDemandViewModel {
         }
     }
 
+    var isOnDemandEnabled = false
     var isNonWiFiInterfaceEnabled = false
     var isWiFiInterfaceEnabled = false
     var selectedSSIDs = [String]()
@@ -51,6 +52,9 @@ class ActivateOnDemandViewModel {
 extension ActivateOnDemandViewModel {
     convenience init(tunnel: TunnelContainer) {
         self.init()
+
+        isOnDemandEnabled = tunnel.isActivateOnDemandEnabled
+
         if tunnel.isActivateOnDemandEnabled {
             switch tunnel.onDemandOption {
             case .off:
@@ -85,6 +89,8 @@ extension ActivateOnDemandViewModel {
 extension ActivateOnDemandViewModel {
     func isEnabled(field: OnDemandField) -> Bool {
         switch field {
+        case .onDemand:
+            return isOnDemandEnabled
         case .nonWiFiInterface:
             return isNonWiFiInterfaceEnabled
         case .wiFiInterface:
@@ -96,6 +102,8 @@ extension ActivateOnDemandViewModel {
 
     func setEnabled(field: OnDemandField, isEnabled: Bool) {
         switch field {
+        case .onDemand:
+            isOnDemandEnabled = isEnabled
         case .nonWiFiInterface:
             isNonWiFiInterfaceEnabled = isEnabled
         case .wiFiInterface:

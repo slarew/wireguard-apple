@@ -44,6 +44,7 @@ class TunnelEditTableViewController: UITableViewController {
     ]
 
     let onDemandFields: [ActivateOnDemandViewModel.OnDemandField] = [
+        .onDemand,
         .nonWiFiInterface,
         .wiFiInterface,
         .ssid
@@ -162,10 +163,13 @@ extension TunnelEditTableViewController {
         case .addPeer:
             return 1
         case .onDemand:
+            if !onDemandViewModel.isOnDemandEnabled {
+                return 1
+            }
             if onDemandViewModel.isWiFiInterfaceEnabled {
-                return 3
+                return 4
             } else {
-                return 2
+                return 3
             }
         }
     }
@@ -425,7 +429,7 @@ extension TunnelEditTableViewController {
 
     private func onDemandCell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
         let field = onDemandFields[indexPath.row]
-        if indexPath.row < 2 {
+        if indexPath.row < 3 {
             let cell: SwitchCell = tableView.dequeueReusableCell(for: indexPath)
             cell.message = field.localizedUIString
             cell.isOn = onDemandViewModel.isEnabled(field: field)
@@ -433,12 +437,28 @@ extension TunnelEditTableViewController {
                 guard let self = self else { return }
                 self.onDemandViewModel.setEnabled(field: field, isEnabled: isOn)
                 let section = self.sections.firstIndex { $0 == .onDemand }!
-                let indexPath = IndexPath(row: 2, section: section)
+                let indexPath = IndexPath(row: 3, section: section)
+
                 if field == .wiFiInterface {
-                    if isOn {
-                        tableView.insertRows(at: [indexPath], with: .fade)
-                    } else {
-                        tableView.deleteRows(at: [indexPath], with: .fade)
+                    tableView.performBatchUpdates {
+                        if isOn {
+                            tableView.insertRows(at: [indexPath], with: .fade)
+                        } else {
+                            tableView.deleteRows(at: [indexPath], with: .fade)
+                        }
+                    }
+                }
+
+                if field == .onDemand {
+                    let indexPathsToAdd = self.onDemandViewModel.isWiFiInterfaceEnabled ? 4 : 3
+                    let affectedIndexPaths = (1..<indexPathsToAdd).map { IndexPath(row: $0, section: section) }
+
+                    tableView.performBatchUpdates {
+                        if isOn {
+                            tableView.insertRows(at: affectedIndexPaths, with: .fade)
+                        } else {
+                            tableView.deleteRows(at: affectedIndexPaths, with: .fade)
+                        }
                     }
                 }
             }
@@ -467,7 +487,7 @@ extension TunnelEditTableViewController {
 
 extension TunnelEditTableViewController {
     override func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        if case .onDemand = sections[indexPath.section], indexPath.row == 2 {
+        if case .onDemand = sections[indexPath.section], indexPath.row == 3 {
             return indexPath
         } else {
             return nil
@@ -477,7 +497,7 @@ extension TunnelEditTableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch sections[indexPath.section] {
         case .onDemand:
-            assert(indexPath.row == 2)
+            assert(indexPath.row == 3)
             tableView.deselectRow(at: indexPath, animated: true)
             let ssidOptionVC = SSIDOptionEditTableViewController(option: onDemandViewModel.ssidOption, ssids: onDemandViewModel.selectedSSIDs)
             ssidOptionVC.delegate = self
