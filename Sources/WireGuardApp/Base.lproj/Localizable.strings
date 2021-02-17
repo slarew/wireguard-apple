@@ -112,6 +112,8 @@
 "tunnelOnDemandSSIDTextFieldPlaceholder" = "SSID";
 
 "tunnelOnDemandKey" = "On demand";
+"tunnelOnDemandEnabled" = "Enabled";
+"tunnelOnDemandDisabled" = "Disabled";
 "tunnelOnDemandOptionOff" = "Off";
 "tunnelOnDemandOptionWiFiOnly" = "Wi-Fi only";
 "tunnelOnDemandOptionWiFiOrCellular" = "Wi-Fi or cellular";

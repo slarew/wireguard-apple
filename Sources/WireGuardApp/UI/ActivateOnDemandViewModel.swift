@@ -55,24 +55,26 @@ extension ActivateOnDemandViewModel {
 
         isOnDemandEnabled = tunnel.isActivateOnDemandEnabled
 
-        if tunnel.isActivateOnDemandEnabled {
-            switch tunnel.onDemandOption {
-            case .off:
-                break
-            case .wiFiInterfaceOnly(let onDemandSSIDOption):
-                isWiFiInterfaceEnabled = true
-                (ssidOption, selectedSSIDs) = ssidViewModel(from: onDemandSSIDOption)
-            case .nonWiFiInterfaceOnly:
-                isNonWiFiInterfaceEnabled = true
-            case .anyInterface(let onDemandSSIDOption):
-                isWiFiInterfaceEnabled = true
-                isNonWiFiInterfaceEnabled = true
-                (ssidOption, selectedSSIDs) = ssidViewModel(from: onDemandSSIDOption)
-            }
+        switch tunnel.onDemandOption {
+        case .off:
+            break
+        case .wiFiInterfaceOnly(let onDemandSSIDOption):
+            isWiFiInterfaceEnabled = true
+            (ssidOption, selectedSSIDs) = ssidViewModel(from: onDemandSSIDOption)
+        case .nonWiFiInterfaceOnly:
+            isNonWiFiInterfaceEnabled = true
+        case .anyInterface(let onDemandSSIDOption):
+            isWiFiInterfaceEnabled = true
+            isNonWiFiInterfaceEnabled = true
+            (ssidOption, selectedSSIDs) = ssidViewModel(from: onDemandSSIDOption)
         }
     }
 
-    func toOnDemandOption() -> ActivateOnDemandOption {
+    var onDemandConfiguration: OnDemandConfiguration {
+        return OnDemandConfiguration(isEnabled: self.isOnDemandEnabled, activationOption: self.activationOption)
+    }
+
+    var activationOption: ActivateOnDemandOption {
         switch (isWiFiInterfaceEnabled, isNonWiFiInterfaceEnabled) {
         case (false, false):
             return .off
@@ -115,6 +117,13 @@ extension ActivateOnDemandViewModel {
 }
 
 extension ActivateOnDemandViewModel {
+    var localizedEnabledDescription: String {
+        if isOnDemandEnabled {
+            return tr("tunnelOnDemandEnabled")
+        } else {
+            return tr("tunnelOnDemandDisabled")
+        }
+    }
     var localizedInterfaceDescription: String {
         switch (isWiFiInterfaceEnabled, isNonWiFiInterfaceEnabled) {
         case (false, false):

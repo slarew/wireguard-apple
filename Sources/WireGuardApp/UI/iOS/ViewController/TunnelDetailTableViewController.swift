@@ -394,7 +394,7 @@ extension TunnelDetailTableViewController {
         if field == .onDemand {
             let cell: KeyValueCell = tableView.dequeueReusableCell(for: indexPath)
             cell.key = field.localizedUIString
-            cell.value = onDemandViewModel.localizedInterfaceDescription
+            cell.value = "\(onDemandViewModel.localizedEnabledDescription). \(onDemandViewModel.localizedInterfaceDescription)"
             cell.copyableGesture = false
             return cell
         } else {

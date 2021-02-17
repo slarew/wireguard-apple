@@ -197,7 +197,7 @@ class TunnelEditViewController: NSViewController {
         }
 
         onDemandControlsRow.saveToViewModel()
-        let onDemandOption = onDemandViewModel.toOnDemandOption()
+        let onDemandOption = onDemandViewModel.activationOption
 
         let isTunnelModifiedWithoutChangingName = (tunnel != nil && tunnel!.name == name)
         guard isTunnelModifiedWithoutChangingName || tunnelsManager.tunnel(named: name) == nil else {

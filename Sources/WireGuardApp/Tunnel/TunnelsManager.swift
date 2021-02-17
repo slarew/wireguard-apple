@@ -117,7 +117,7 @@ class TunnelsManager {
         }
     }
 
-    func add(tunnelConfiguration: TunnelConfiguration, onDemandOption: ActivateOnDemandOption = .off, completionHandler: @escaping (Result<TunnelContainer, TunnelsManagerError>) -> Void) {
+    func add(tunnelConfiguration: TunnelConfiguration, onDemandConfiguration: OnDemandConfiguration = .disabled, completionHandler: @escaping (Result<TunnelContainer, TunnelsManagerError>) -> Void) {
         let tunnelName = tunnelConfiguration.name ?? ""
         if tunnelName.isEmpty {
             completionHandler(.failure(TunnelsManagerError.tunnelNameEmpty))
@@ -133,7 +133,7 @@ class TunnelsManager {
         tunnelProviderManager.setTunnelConfiguration(tunnelConfiguration)
         tunnelProviderManager.isEnabled = true
 
-        onDemandOption.apply(on: tunnelProviderManager)
+        onDemandConfiguration.apply(on: tunnelProviderManager)
 
         let activeTunnel = tunnels.first { $0.status == .active || $0.status == .activating }
 
@@ -206,7 +206,7 @@ class TunnelsManager {
         }
     }
 
-    func modify(tunnel: TunnelContainer, tunnelConfiguration: TunnelConfiguration, onDemandOption: ActivateOnDemandOption, completionHandler: @escaping (TunnelsManagerError?) -> Void) {
+    func modify(tunnel: TunnelContainer, tunnelConfiguration: TunnelConfiguration, onDemandConfiguration: OnDemandConfiguration, completionHandler: @escaping (TunnelsManagerError?) -> Void) {
         let tunnelName = tunnelConfiguration.name ?? ""
         if tunnelName.isEmpty {
             completionHandler(TunnelsManagerError.tunnelNameEmpty)
@@ -231,8 +231,8 @@ class TunnelsManager {
         }
         tunnelProviderManager.isEnabled = true
 
-        let isActivatingOnDemand = !tunnelProviderManager.isOnDemandEnabled && onDemandOption != .off
-        onDemandOption.apply(on: tunnelProviderManager)
+        let isActivatingOnDemand = !tunnelProviderManager.isOnDemandEnabled && onDemandConfiguration.isEnabled
+        onDemandConfiguration.apply(on: tunnelProviderManager)
 
         tunnelProviderManager.saveToPreferences { [weak self] error in
             if let error = error {
