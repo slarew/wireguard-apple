@@ -132,8 +132,7 @@ class TunnelsManager {
         let tunnelProviderManager = NETunnelProviderManager()
         tunnelProviderManager.setTunnelConfiguration(tunnelConfiguration)
         tunnelProviderManager.isEnabled = true
-
-        onDemandOption.apply(on: tunnelProviderManager)
+        tunnelProviderManager.onDemandRules = onDemandOption.onDemandRules
 
         let activeTunnel = tunnels.first { $0.status == .active || $0.status == .activating }
 
@@ -232,7 +231,8 @@ class TunnelsManager {
         tunnelProviderManager.isEnabled = true
 
         let isActivatingOnDemand = !tunnelProviderManager.isOnDemandEnabled && onDemandOption != .off
-        onDemandOption.apply(on: tunnelProviderManager)
+
+        tunnelProviderManager.onDemandRules = onDemandOption.onDemandRules
 
         tunnelProviderManager.saveToPreferences { [weak self] error in
             if let error = error {
@@ -585,11 +585,12 @@ class TunnelContainer: NSObject {
 
         status = .activating // Ensure that no other tunnel can attempt activation until this tunnel is done trying
 
-        guard tunnelProvider.isEnabled else {
+        guard tunnelProvider.isEnabled && tunnelProvider.isOnDemandEnabled == (onDemandOption != .off) else {
             // In case the tunnel had gotten disabled, re-enable and save it,
             // then call this function again.
             wg_log(.debug, staticMessage: "startActivation: Tunnel is disabled. Re-enabling and saving")
             tunnelProvider.isEnabled = true
+            tunnelProvider.isOnDemandEnabled = onDemandOption != .off
             tunnelProvider.saveToPreferences { [weak self] error in
                 guard let self = self else { return }
                 if error != nil {
@@ -643,7 +644,19 @@ class TunnelContainer: NSObject {
 
     fileprivate func startDeactivation() {
         wg_log(.debug, message: "startDeactivation: Tunnel: \(name)")
-        (tunnelProvider.connection as? NETunnelProviderSession)?.stopTunnel()
+
+        if tunnelProvider.isOnDemandEnabled {
+            tunnelProvider.isOnDemandEnabled = false
+            tunnelProvider.saveToPreferences { [weak self] error in
+                if let error = error {
+                    wg_log(.error, message: "startDeactivation: Error disabling on-demand: \(error.localizedDescription)")
+                }
+
+                (self?.tunnelProvider.connection as? NETunnelProviderSession)?.stopTunnel()
+            }
+        } else {
+            (self.tunnelProvider.connection as? NETunnelProviderSession)?.stopTunnel()
+        }
     }
 }
 
