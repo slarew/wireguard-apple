@@ -12,8 +12,13 @@ struct OnDemandConfiguration {
     }
 
     func apply(on tunnelProviderManager: NETunnelProviderManager) {
+        let rules = activationOption.onDemandRules
+        #if os(macOS)
+        tunnelProviderManager.isOnDemandEnabled = !(rules?.isEmpty ?? false)
+        #else
         tunnelProviderManager.isOnDemandEnabled = isEnabled
-        tunnelProviderManager.onDemandRules = activationOption.onDemandRules
+        #endif
+        tunnelProviderManager.onDemandRules = rules
     }
 }
 

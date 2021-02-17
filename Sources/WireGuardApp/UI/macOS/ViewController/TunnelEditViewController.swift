@@ -197,7 +197,6 @@ class TunnelEditViewController: NSViewController {
         }
 
         onDemandControlsRow.saveToViewModel()
-        let onDemandOption = onDemandViewModel.activationOption
 
         let isTunnelModifiedWithoutChangingName = (tunnel != nil && tunnel!.name == name)
         guard isTunnelModifiedWithoutChangingName || tunnelsManager.tunnel(named: name) == nil else {
@@ -233,7 +232,7 @@ class TunnelEditViewController: NSViewController {
 
         if let tunnel = tunnel {
             // We're modifying an existing tunnel
-            tunnelsManager.modify(tunnel: tunnel, tunnelConfiguration: tunnelConfiguration, onDemandOption: onDemandOption) { [weak self] error in
+            tunnelsManager.modify(tunnel: tunnel, tunnelConfiguration: tunnelConfiguration, onDemandConfiguration: onDemandViewModel.onDemandConfiguration) { [weak self] error in
                 guard let self = self else { return }
                 self.setUserInteractionEnabled(true)
                 if let error = error {
@@ -245,7 +244,7 @@ class TunnelEditViewController: NSViewController {
             }
         } else {
             // We're creating a new tunnel
-            self.tunnelsManager.add(tunnelConfiguration: tunnelConfiguration, onDemandOption: onDemandOption) { [weak self] result in
+            self.tunnelsManager.add(tunnelConfiguration: tunnelConfiguration, onDemandConfiguration: onDemandViewModel.onDemandConfiguration) { [weak self] result in
                 guard let self = self else { return }
                 self.setUserInteractionEnabled(true)
                 switch result {
