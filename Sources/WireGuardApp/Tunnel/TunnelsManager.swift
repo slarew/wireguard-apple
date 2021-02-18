@@ -229,9 +229,6 @@ class TunnelsManager {
             isTunnelConfigurationChanged = true
         }
         tunnelProviderManager.isEnabled = true
-
-        let isActivatingOnDemand = !tunnelProviderManager.isOnDemandEnabled && onDemandOption != .off
-
         tunnelProviderManager.onDemandRules = onDemandOption.onDemandRules
 
         tunnelProviderManager.saveToPreferences { [weak self] error in
@@ -261,21 +258,18 @@ class TunnelsManager {
                 }
             }
 
-            if isActivatingOnDemand {
-                // Reload tunnel after saving.
-                // Without this, the tunnel stopes getting updates on the tunnel status from iOS.
-                tunnelProviderManager.loadFromPreferences { error in
-                    tunnel.isActivateOnDemandEnabled = tunnelProviderManager.isOnDemandEnabled
-                    if let error = error {
-                        wg_log(.error, message: "Modify: Re-loading after saving configuration failed: \(error)")
-                        completionHandler(TunnelsManagerError.systemErrorOnModifyTunnel(systemError: error))
-                    } else {
-                        completionHandler(nil)
-                    }
+            // Reload tunnel after saving.
+            // Without this, the tunnel stopes getting updates on the tunnel status from iOS.
+            tunnelProviderManager.loadFromPreferences { error in
+                tunnel.isActivateOnDemandEnabled = tunnelProviderManager.isOnDemandEnabled
+                if let error = error {
+                    wg_log(.error, message: "Modify: Re-loading after saving configuration failed: \(error)")
+                    completionHandler(TunnelsManagerError.systemErrorOnModifyTunnel(systemError: error))
+                } else {
+                    completionHandler(nil)
                 }
-            } else {
-                completionHandler(nil)
             }
+
         }
     }
 
