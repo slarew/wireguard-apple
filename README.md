@@ -49,13 +49,12 @@ $ open WireGuard.xcodeproj
    - Type in `WireGuardGoBridge<PLATFORM>` under the "Product name", replacing the `<PLATFORM>` 
      placeholder with the name of the platform. For example, when targeting macOS use `macOS`, or 
      when targeting iOS use `iOS`.
-     Make sure the build tool is set to: `/usr/bin/make` (default).
-   - In the appeared "Info" tab of a newly created target, type in the "Directory" path under 
-     the "External Build Tool Configuration":
+   - In the appeared "Info" tab of a newly created target, fill in the fields as following:
      
-     ```
-     $BUILD_DIR/../../SourcePackages/checkouts/wireguard-apple/Sources/WireGuardKitGo
-     ```
+     - Build Tool: `/bin/sh`
+     - Arguments: `build-wireguard-go.sh $(ACTION)`
+     - Directory: `$(SOURCE_ROOT)`
+     - Pass build settings in environment: Yes
      
    - Switch to "Build Settings" and find `SDKROOT`.
      Type in `macosx` if you target macOS, or type in `iphoneos` if you target iOS.
@@ -74,6 +73,35 @@ $ open WireGuard.xcodeproj
    
 5. iOS only: Locate Bitcode settings under your application target, Build settings -> Enable Bitcode, 
    change the corresponding value to "No".
+   
+6. Create a `build-wireguard-go.sh` file under the Xcode project root, with the following contents:
+    
+    ```
+    #!/bin/sh
+    
+    ACTION=$1
+    
+    # When archiving, Xcode sets the action to "install"
+    if [ "$ACTION" == "install" ]; then
+        SOURCE_PACKAGES_PATH="$BUILD_DIR/../../../../../SourcePackages"
+    else
+        SOURCE_PACKAGES_PATH="$BUILD_DIR/../../SourcePackages"
+    fi
+    
+    # Resolve SourcesPackages path
+    RESLVED_SOURCE_PACKAGES_PATH="$( cd "$SOURCE_PACKAGES_PATH" && pwd -P )"
+    if [ "$RESLVED_SOURCE_PACKAGES_PATH" == "" ]; then
+        echo "Failed to resolve the SourcePackages path: $SOURCE_PACKAGES_PATH"
+        exit -1
+    fi
+    
+    # Compile the path to the Makefile directory
+    WIREGUARD_KIT_GO_PATH="$RESLVED_SOURCE_PACKAGES_PATH/checkouts/wireguard-apple/Sources/WireGuardKitGo"
+    echo "WireGuardKitGo path resolved to $WIREGUARD_KIT_GO_PATH"
+    
+    # Run make
+    /usr/bin/make -C "$WIREGUARD_KIT_GO_PATH" $ACTION
+    ```
    
 Note that if you ship your app for both iOS and macOS, make sure to repeat the steps 2-4 twice, 
 once per platform.
