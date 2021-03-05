@@ -88,7 +88,12 @@ class PacketTunnelSettingsGenerator {
             let dnsSettings = NEDNSSettings(servers: dnsServerStrings)
             dnsSettings.searchDomains = tunnelConfiguration.interface.dnsSearch
             if !tunnelConfiguration.interface.dns.isEmpty {
-                dnsSettings.matchDomains = [""] // All DNS queries must first go through the tunnel's DNS
+                if tunnelConfiguration.interface.dnsMatchDomains.isEmpty {
+                    // All DNS queries must first go through the tunnel's DNS
+                    dnsSettings.matchDomains = [""]
+                } else {
+                    dnsSettings.matchDomains = tunnelConfiguration.interface.dnsMatchDomains
+                }
             }
             networkSettings.dnsSettings = dnsSettings
         }
