@@ -136,6 +136,7 @@ extension TunnelConfiguration {
         if !interface.dns.isEmpty || !interface.dnsSearch.isEmpty {
             var dnsLine = interface.dns.map { $0.stringRepresentation }
             dnsLine.append(contentsOf: interface.dnsSearch)
+            dnsLine.append(contentsOf: interface.dnsMatchDomains.map { "~" + $0 })
             let dnsString = dnsLine.joined(separator: ", ")
             output.append("DNS = \(dnsString)\n")
         }
@@ -191,15 +192,19 @@ extension TunnelConfiguration {
         if let dnsString = attributes["dns"] {
             var dnsServers = [DNSServer]()
             var dnsSearch = [String]()
+            var dnsMatchDomains = [String]()
             for dnsServerString in dnsString.splitToArray(trimmingCharacters: .whitespacesAndNewlines) {
                 if let dnsServer = DNSServer(from: dnsServerString) {
                     dnsServers.append(dnsServer)
+                } else if dnsServerString.first == "~" && !dnsServerString.dropFirst().isEmpty {
+                    dnsMatchDomains.append(String(dnsServerString.dropFirst()))
                 } else {
                     dnsSearch.append(dnsServerString)
                 }
             }
             interface.dns = dnsServers
             interface.dnsSearch = dnsSearch
+            interface.dnsMatchDomains = dnsMatchDomains
         }
         if let mtuString = attributes["mtu"] {
             guard let mtu = UInt16(mtuString) else {

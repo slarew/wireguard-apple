@@ -139,9 +139,10 @@ class TunnelViewModel {
             if let mtu = config.mtu {
                 scratchpad[.mtu] = String(mtu)
             }
-            if !config.dns.isEmpty || !config.dnsSearch.isEmpty {
+            if !config.dns.isEmpty || !config.dnsSearch.isEmpty || !config.dnsMatchDomains.isEmpty {
                 var dns = config.dns.map { $0.stringRepresentation }
                 dns.append(contentsOf: config.dnsSearch)
+                dns.append(contentsOf: config.dnsMatchDomains.map { "~" + $0 })
                 scratchpad[.dns] = dns.joined(separator: ", ")
             }
             return scratchpad
@@ -197,15 +198,19 @@ class TunnelViewModel {
             if let dnsString = scratchpad[.dns] {
                 var dnsServers = [DNSServer]()
                 var dnsSearch = [String]()
+                var dnsMatchDomains = [String]()
                 for dnsServerString in dnsString.splitToArray(trimmingCharacters: .whitespacesAndNewlines) {
                     if let dnsServer = DNSServer(from: dnsServerString) {
                         dnsServers.append(dnsServer)
+                    } else if dnsServerString.first == "~" && !dnsServerString.dropFirst().isEmpty {
+                        dnsMatchDomains.append(String(dnsServerString.dropFirst()))
                     } else {
                         dnsSearch.append(dnsServerString)
                     }
                 }
                 config.dns = dnsServers
                 config.dnsSearch = dnsSearch
+                config.dnsMatchDomains = dnsMatchDomains
             }
 
             guard errorMessages.isEmpty else { return .error(errorMessages.first!) }

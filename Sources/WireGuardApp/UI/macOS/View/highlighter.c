@@ -121,6 +121,13 @@ static bool is_valid_hostname(string_span_t s)
 	return num_digit != num_entity;
 }
 
+static bool is_valid_dns_match_hostname(string_span_t s)
+{
+    if (!s.len || s.s[0] != '~')
+        return false;
+    return is_valid_hostname((string_span_t){ s.s + 1, s.len - 1});
+}
+
 static bool is_valid_ipv4(string_span_t s)
 {
 	for (size_t j, i = 0, pos = 0; i < 4 && pos < s.len; ++i) {
@@ -448,7 +455,7 @@ static void highlight_multivalue_value(struct highlight_span_array *ret, const s
 	case DNS:
 		if (is_valid_ipv4(s) || is_valid_ipv6(s))
 			append_highlight_span(ret, parent.s, s, HighlightIP);
-		else if (is_valid_hostname(s))
+		else if (is_valid_hostname(s) || is_valid_dns_match_hostname(s))
 			append_highlight_span(ret, parent.s, s, HighlightHost);
 		else
 			append_highlight_span(ret, parent.s, s, HighlightError);
